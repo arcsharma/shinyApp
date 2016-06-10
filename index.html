@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Tourist Visit Visualization</title>
+  <meta charset="utf-8">
+  <meta name="description" content="Tourist Visit Visualization">
+  <meta name="author" content="Archana Sharma">
+  <meta name="generator" content="slidify" />
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta http-equiv="X-UA-Compatible" content="chrome=1">
+  <link rel="stylesheet" href="libraries/frameworks/io2012/css/default.css" media="all" >
+  <link rel="stylesheet" href="libraries/frameworks/io2012/css/phone.css" 
+    media="only screen and (max-device-width: 480px)" >
+  <link rel="stylesheet" href="libraries/frameworks/io2012/css/slidify.css" >
+  <link rel="stylesheet" href="libraries/highlighters/highlight.js/css/tomorrow.css" />
+  <base target="_blank"> <!-- This amazingness opens all links in a new tab. -->  
+  
+  <!-- Grab CDN jQuery, fall back to local if offline -->
+  <script src="http://ajax.aspnetcdn.com/ajax/jQuery/jquery-1.7.min.js"></script>
+  <script>window.jQuery || document.write('<script src="libraries/widgets/quiz/js/jquery.js"><\/script>')</script> 
+  <script data-main="libraries/frameworks/io2012/js/slides" 
+    src="libraries/frameworks/io2012/js/require-1.0.8.min.js">
+  </script>
+  
+  
+
+</head>
+<body style="opacity: 0">
+  <slides class="layout-widescreen">
+    
+    <!-- LOGO SLIDE -->
+        <slide class="title-slide segue nobackground">
+  <hgroup class="auto-fadein">
+    <h1>Tourist Visit Visualization</h1>
+    <h2>Using dygraph visualization to view the number of tourist visiting Nepal</h2>
+    <p>Archana Sharma<br/>Data Scientist</p>
+  </hgroup>
+  <article></article>  
+</slide>
+    
+
+    <!-- SLIDES -->
+    <slide class="" id="slide-1" style="background:;">
+  <hgroup>
+    <h2>Tourist Visit Data</h2>
+  </hgroup>
+  <article data-timings="">
+    <p>Lumbini, Nepal is birthplace of Gautam Buddha. Every year, there are huge number of tourists visiting Lumbini. I have created a shiny application <a href="http://rpubs.com/amitpokhrel/177821">Tourist Visit to Nepal</a>  to present the data as visualization and presenting my idea in this presentation.
+Lumbini is famous all over the world and people from around the world are visiting thsi place. I have tried to answer which country has highest number of tourist visit to Lumbini in year 2012-2014. In this presentation, I will show the steps I took to create the visualization.
+I downloaded the data from <a href="http://data.opennepal.net/content/number-foreigner-lumbini-2012-2013">Open Data Nepal </a></p>
+
+<pre><code class="r">tourist &lt;- read.csv(&quot;tourist.csv&quot;)
+nrow(tourist)
+</code></pre>
+
+<pre><code>## [1] 1524
+</code></pre>
+
+<pre><code class="r">names(tourist)
+</code></pre>
+
+<pre><code>## [1] &quot;Year.AD&quot;        &quot;Year.BS&quot;        &quot;Country&quot;        &quot;Month&quot;         
+## [5] &quot;No.of.Visitors&quot;
+</code></pre>
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+<slide class="class" id="id" style="background:;">
+  <hgroup>
+    <h2>Look into dataset</h2>
+  </hgroup>
+  <article data-timings="">
+    <pre><code class="r">str(tourist)
+</code></pre>
+
+<pre><code>## &#39;data.frame&#39;:    1524 obs. of  5 variables:
+##  $ Year.AD       : int  2012 2012 2012 2012 2012 2012 2012 2012 2012 2012 ...
+##  $ Year.BS       : int  2069 2069 2069 2069 2069 2069 2069 2069 2069 2069 ...
+##  $ Country       : Factor w/ 57 levels &quot;Afghanistan&quot;,..: 1 1 1 1 1 1 1 1 1 1 ...
+##  $ Month         : Factor w/ 12 levels &quot;April&quot;,&quot;Aug.&quot;,..: 5 4 8 1 9 7 6 2 12 11 ...
+##  $ No.of.Visitors: int  0 0 0 0 0 0 0 0 0 0 ...
+</code></pre>
+
+<p>Data contains information about visitors from 57 different countries for 12 months in 2012,2013 and 2014.</p>
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+<slide class="class" id="id2" style="background:;">
+  <hgroup>
+    <h2>Convert data to time series(xts) format</h2>
+  </hgroup>
+  <article data-timings="">
+    <pre><code>## Warning: package &#39;xts&#39; was built under R version 3.2.5
+</code></pre>
+
+<pre><code>## Warning: package &#39;zoo&#39; was built under R version 3.2.5
+</code></pre>
+
+<pre><code class="r">#Change month to convert it to time series format
+tourist$Month &lt;- factor(tourist$Month
+                        , levels = c(&quot;Jan.&quot;,&quot;Feb.&quot;,&quot;Mar.&quot;,&quot;April&quot;,&quot;May&quot;,&quot;June&quot;,&quot;July&quot;,
+                                     &quot;Aug.&quot;,&quot;Sept.&quot;,&quot;Oct.&quot;,&quot;Nov.&quot;,&quot;Dec.&quot;)
+                        , labels = c(&quot;01&quot;,&quot;02&quot;,&quot;03&quot;,&quot;04&quot;,&quot;05&quot;,&quot;06&quot;,&quot;07&quot;,
+                                     &quot;08&quot;,&quot;09&quot;, &quot;10&quot;,&quot;11&quot;,&quot;12&quot;))
+#subset data for Srilanka
+touristData &lt;- subset(tourist, Country == &quot;Srilanka&quot;)
+tourist_xts &lt;- as.xts(
+        touristData[5]
+        , order.by = as.Date(
+                paste0(touristData$Year.AD,&quot;-&quot;,touristData$Month,
+                       &quot;-01&quot;,format = &quot;%Y-%M-01&quot;)
+        )
+)
+</code></pre>
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+<slide class="class" id="id3" style="background:;">
+  <hgroup>
+    <h2>Dygraph Visualization of tourist from Srilanka</h2>
+  </hgroup>
+  <article data-timings="">
+    <pre><code>dygraph(data = tourist_xts, 
+        main = paste(&quot;Tourist Visit from Srilanka&quot;,
+                     &quot; to Lumbini, Nepal&quot;, sep = &quot;&quot;)) %&gt;% 
+        dyRangeSelector()
+</code></pre>
+
+<p><img src="Rplot.png" alt="Plot"></p>
+
+<p>This flow is made dynamic to be drived with the country selected by user. </p>
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+    <slide class="backdrop"></slide>
+  </slides>
+  <div class="pagination pagination-small" id='io2012-ptoc' style="display:none;">
+    <ul>
+      <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=1 title='Tourist Visit Data'>
+         1
+      </a>
+    </li>
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=2 title='Look into dataset'>
+         2
+      </a>
+    </li>
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=3 title='Convert data to time series(xts) format'>
+         3
+      </a>
+    </li>
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=4 title='Dygraph Visualization of tourist from Srilanka'>
+         4
+      </a>
+    </li>
+  </ul>
+  </div>  <!--[if IE]>
+    <script 
+      src="http://ajax.googleapis.com/ajax/libs/chrome-frame/1/CFInstall.min.js">  
+    </script>
+    <script>CFInstall.check({mode: 'overlay'});</script>
+  <![endif]-->
+</body>
+  <!-- Load Javascripts for Widgets -->
+  
+  <!-- LOAD HIGHLIGHTER JS FILES -->
+  <script src="libraries/highlighters/highlight.js/highlight.pack.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script>
+  <!-- DONE LOADING HIGHLIGHTER JS FILES -->
+   
+  </html>
